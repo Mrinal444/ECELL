@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  role         String         // ORGANIZER, TEAM, JUDGE
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  team         Team?
+  judgeEntries ContestJudge[]
+  reviews      Review[]
+  recusals     Recusal[]
+}
+
+model Contest {
+  id                 String         @id @default(cuid())
+  title              String
+  description        String
+  status             String         @default("DRAFT") // DRAFT, OPEN, JUDGING, PUBLISHED
+  submissionDeadline DateTime
+  blindReview        Boolean        @default(true)
+  publicLeaderboard  Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  criteria           Criterion[]
+  judges             ContestJudge[]
+  submissions        Submission[]
+  recusals           Recusal[]
+}
+
+model Criterion {
+  id          String    @id @default(cuid())
+  contestId   String
+  label       String
+  description String
+  weight      Int
+  position    Int       @default(0)
+
+  contest     Contest   @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  scores      Score[]
+}
+
+model ContestJudge {
+  id        String   @id @default(cuid())
+  contestId String
+  userId    String
+  label     String   // e.g. "Judge A", "Judge B"
+  createdAt DateTime @default(now())
+
+  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+}
+
+model Team {
+  id        String       @id @default(cuid())
+  ownerId   String       @unique
+  name      String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+}
+
+model Submission {
+  id             String    @id @default(cuid())
+  contestId      String
+  teamId         String
+  title          String
+  problem        String
+  solution       String
+  market         String
+  traction       String
+  teamBios       String
+  anonymizedBios String?
+  deckUrl        String
+  submittedAt    DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  contest        Contest   @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  team           Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  reviews        Review[]
+  recusals       Recusal[]
+
+  @@unique([contestId, teamId])
+}
+
+model Recusal {
+  id           String     @id @default(cuid())
+  contestId    String
+  judgeId      String     // User.id of judge
+  submissionId String
+  reason       String?
+  createdAt    DateTime   @default(now())
+
+  contest      Contest    @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  judge        User       @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@unique([judgeId, submissionId])
+}
+
+model Review {
+  id             String    @id @default(cuid())
+  submissionId   String
+  judgeId        String    // User.id of judge
+  overallComment String?
+  submittedAt    DateTime? // null = draft
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  submission     Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  judge          User       @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  scores         Score[]
+
+  @@unique([submissionId, judgeId])
+}
+
+model Score {
+  id          String    @id @default(cuid())
+  reviewId    String
+  criterionId String
+  value       Int       // 1 - 10
+  comment     String?
+
+  review      Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  criterion   Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, criterionId])
+}

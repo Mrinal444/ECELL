@@ -1,0 +1,20 @@
+Core Team Sprint Sync & Budget Allocation
+Date: 2026-10-15
+Attendees: Siddharth, Ananya, Rahul, Priya, Rohan, Vikram, Tanvi
+
+Notes:
+- Discussed the upcoming Hackathon & Investor Mixer scheduled for next month.
+- Budget review: Overall event budget capped at 5 Lakhs INR.
+- Logistics check: Auditorium and 3 seminar halls reserved.
+
+Decisions:
+1. Approved prize pool of INR 1,50,000 across 3 tracks (FinTech, GenAI, ClimateTech).
+2. Agreed to use Devfolio for participant registrations and team team matching.
+3. Decided catering vendor will be Campus Cafe with lunch and high tea vouchers.
+
+Action Items:
+- Rahul: Draft and send sponsor agreements to Nexus Ventures and Peak XV by Friday.
+- Priya: Set up Devfolio hackathon portal and publish application rules by tomorrow.
+- Tanvi: Coordinate volunteer orientation session and prepare shift schedule in 3 days.
+- Rohan: Finalize stage sound setup and 4 wireless collar mics with AV vendor by next Tuesday.
+- Vikram: Design and print 50 event ID badges and stage backdrop banner by Thursday.

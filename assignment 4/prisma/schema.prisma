@@ -1,0 +1,184 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  FOUNDER
+  MENTOR
+}
+
+enum Domain {
+  FinTech
+  HealthTech
+  EdTech
+  AI
+  Climate
+  Consumer
+  SaaS
+}
+
+enum Stage {
+  Idea
+  PreSeed
+  Seed
+  Growth
+}
+
+enum Skill {
+  Fundraising
+  GoToMarket
+  Product
+  Hiring
+  TechArchitecture
+  Pricing
+  Sales
+  Branding
+  Legal
+  Operations
+}
+
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum SessionStatus {
+  REQUESTED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id           String          @id @default(uuid())
+  email        String          @unique
+  passwordHash String
+  name         String
+  role         Role
+  founder      FounderProfile?
+  mentor       MentorProfile?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model FounderProfile {
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id])
+  startupName  String?
+  pitch        String?
+  domain       Domain?
+  stage        Stage?
+  needsNote    String?
+  onboarded    Boolean       @default(false)
+  needs        FounderNeed[]
+
+  matchRequestsAsFounder MatchRequest[] @relation("MatchFounder")
+  sessionsAsFounder      Session[]      @relation("SessionFounder")
+}
+
+model FounderNeed {
+  id         String         @id @default(uuid())
+  founderId  String
+  founder    FounderProfile @relation(fields: [founderId], references: [id])
+  skill      Skill
+
+  @@unique([founderId, skill])
+}
+
+model MentorProfile {
+  id             String          @id @default(uuid())
+  userId         String          @unique
+  user           User            @relation(fields: [userId], references: [id])
+  headline       String?
+  bio            String?
+  expertiseNote  String?
+  onboarded      Boolean         @default(false)
+  domains        MentorDomain[]
+  stages         MentorStage[]
+  skills         MentorSkill[]
+  availability   AvailabilitySlot[]
+
+  matchRequestsAsMentor MatchRequest[] @relation("MatchMentor")
+  sessionsAsMentor      Session[]      @relation("SessionMentor")
+}
+
+model MentorDomain {
+  id        String        @id @default(uuid())
+  mentorId  String
+  mentor    MentorProfile @relation(fields: [mentorId], references: [id])
+  domain    Domain
+
+  @@unique([mentorId, domain])
+}
+
+model MentorStage {
+  id        String        @id @default(uuid())
+  mentorId  String
+  mentor    MentorProfile @relation(fields: [mentorId], references: [id])
+  stage     Stage
+
+  @@unique([mentorId, stage])
+}
+
+model MentorSkill {
+  id        String        @id @default(uuid())
+  mentorId  String
+  mentor    MentorProfile @relation(fields: [mentorId], references: [id])
+  skill     Skill
+
+  @@unique([mentorId, skill])
+}
+
+model AvailabilitySlot {
+  id        String        @id @default(uuid())
+  mentorId  String
+  mentor    MentorProfile @relation(fields: [mentorId], references: [id])
+  weekday   Int      // 0-6 (0 = Sunday)
+  startMin  Int
+  endMin    Int
+}
+
+model MatchRequest {
+  id          String        @id @default(uuid())
+  founderId   String
+  founder     FounderProfile @relation("MatchFounder", fields: [founderId], references: [id])
+  mentorId    String
+  mentor      MentorProfile  @relation("MatchMentor", fields: [mentorId], references: [id])
+  status      MatchStatus    @default(PENDING)
+  score       Int
+  reason      String
+  message     String?
+  respondedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  sessions    Session[]
+
+  @@unique([founderId, mentorId])
+}
+
+model Session {
+  id             String         @id @default(uuid())
+  matchRequestId String
+  matchRequest   MatchRequest   @relation(fields: [matchRequestId], references: [id])
+  founderId      String
+  founder        FounderProfile @relation("SessionFounder", fields: [founderId], references: [id])
+  mentorId       String
+  mentor         MentorProfile  @relation("SessionMentor", fields: [mentorId], references: [id])
+  startsAt       DateTime
+  endsAt         DateTime
+  status         SessionStatus  @default(REQUESTED)
+  topic          String
+  founderNotes   String?
+  mentorNotes    String?
+  cancelledBy    String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}

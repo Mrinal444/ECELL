@@ -1,0 +1,127 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                 String     @id @default(cuid())
+  name               String
+  email              String     @unique
+  passwordHash       String
+  role               String     @default("MEMBER") // LEAD, MEMBER
+  active             Boolean    @default(true)
+  mustChangePassword Boolean    @default(false)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  deals              Deal[]     @relation("DealOwner")
+  activities         Activity[]
+
+  @@index([email])
+}
+
+model Organization {
+  id             String      @id @default(cuid())
+  name           String
+  normalizedName String      @unique
+  domain         String?     @unique
+  type           String      @default("SPONSOR") // SPONSOR, SPEAKER, PARTNER
+  city           String?
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  contacts       Contact[]
+  deals          Deal[]
+
+  @@index([normalizedName])
+  @@index([domain])
+}
+
+model Contact {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  title          String?
+  phone          String?
+  email          String?
+  isPrimary      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([phone])
+}
+
+model Campaign {
+  id        String   @id @default(cuid())
+  name      String
+  year      Int
+  goalINR   Float?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deals     Deal[]
+
+  @@index([active])
+}
+
+model Deal {
+  id             String           @id @default(cuid())
+  organizationId String
+  campaignId     String
+  ownerId        String?
+  stage          String           @default("PROSPECT") // PROSPECT, CONTACTED, REPLIED, MEETING_SCHEDULED, NEGOTIATION, CONFIRMED, LOST
+  lostReason     String?          // BUDGET, NO_RESPONSE, COMPETITOR, TIMING, OTHER
+  valueINR       Float?
+  tier           String?          // TITLE, CO_TITLE, PLATINUM, GOLD, SILVER, BRONZE, IN_KIND, PARTNER
+  dealType       String?          @default("CASH") // CASH, IN_KIND, HYBRID
+  paymentStatus  String?          // PLEDGED, INVOICED, RECEIVED
+  nextFollowUpAt DateTime?
+  lastActivityAt DateTime         @default(now())
+  version        Int              @default(1)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campaign       Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  owner          User?            @relation("DealOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  activities     Activity[]
+
+  @@unique([organizationId, campaignId])
+  @@index([campaignId, stage])
+  @@index([ownerId])
+  @@index([nextFollowUpAt])
+  @@index([lastActivityAt])
+}
+
+model Activity {
+  id        String       @id @default(cuid())
+  dealId    String
+  userId    String
+  type      String       // WHATSAPP, CALL, EMAIL, MEETING, NOTE, STAGE_CHANGE, ASSIGNMENT, MERGE
+  body      String
+  metadata  String?
+  createdAt DateTime     @default(now())
+
+  deal      Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([dealId, createdAt])
+  @@index([userId])
+}
+
+model BackupLog {
+  id        String   @id @default(cuid())
+  filename  String
+  sizeBytes Int
+  status    String
+  createdAt DateTime @default(now())
+}
