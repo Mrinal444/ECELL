@@ -85,3 +85,8 @@ Each assignment is a standalone full-stack application with its own dependencies
 - **Data Layer:** SQLite with Prisma ORM for zero-configuration, standalone portability
 - **Testing:** Unit & regression test coverage with Vitest
 - **Security:** Hashed passwords (`bcryptjs`), JWT-based sessions, and defense against CSV formula injection
+
+---
+
+## Author
+Maintained and submitted by [Mrinal444](https://github.com/Mrinal444).
